@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.express as px
 
 # Carregar os arquivos CSV
 file_paths = {
@@ -59,3 +60,26 @@ def load_data():
 if __name__ == "__main__":
     all_data = load_data()
     print("Dados carregados e tratados com sucesso.")
+
+# Função principal para carregar dados e fornecer análises básicas
+def main():
+    all_data = load_data()
+    
+    # Estatísticas básicas
+    print("Estatísticas descritivas das variáveis numéricas:")
+    print(all_data.describe())
+    
+    # Gráficos básicos usando Plotly (para análise interna)
+    # Distribuição de acidentes por ano
+    if 'ano' in all_data.columns:
+        acidentes_por_ano = all_data['ano'].value_counts().sort_index().reset_index()
+        acidentes_por_ano.columns = ['Ano', 'Número de Acidentes']
+        fig = px.bar(acidentes_por_ano, x='Ano', y='Número de Acidentes',
+                     title="Distribuição de Acidentes por Ano",
+                     labels={'Ano': 'Ano', 'Número de Acidentes': 'Número de Acidentes'})
+        fig.show()
+    else:
+        print("Os dados de ano não estão disponíveis para criar o gráfico de distribuição por ano.")
+
+if __name__ == "__main__":
+    main()
