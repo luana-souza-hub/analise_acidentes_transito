@@ -1,7 +1,7 @@
 import pandas as pd
-import plotly.express as px
+import os
 
-# Carregar os arquivos CSV
+# Configuração dos arquivos CSV
 file_paths = {
     "2021": "2021.csv",
     "2022": "2022.csv",
@@ -30,9 +30,9 @@ def load_and_clean_csv(file_path):
         print(f"Erro ao carregar o arquivo {file_path}: {e}")
         return None
 
-# Carregar e consolidar os dados
+# Função para carregar todos os dados
 def load_data():
-    dataframes = [load_and_clean_csv(file_paths[year]) for year in file_paths]
+    dataframes = [load_and_clean_csv(file_paths[year]) for year in file_paths if os.path.exists(file_paths[year])]
     dataframes = [df for df in dataframes if df is not None]
     if len(dataframes) == 0:
         raise ValueError("Nenhum DataFrame foi carregado. Verifique os arquivos CSV.")
@@ -41,7 +41,7 @@ def load_data():
     # Tratamento de valores ausentes
     categorical_columns = all_data.select_dtypes(include='object').columns
     for col in categorical_columns:
-        all_data[col].fillna(all_data[col].mode()[0], inplace=True)
+        all_data.loc[:, col] = all_data[col].fillna(all_data[col].mode()[0])
     
     # Remoção de duplicatas
     all_data.drop_duplicates(inplace=True)
@@ -57,29 +57,7 @@ def load_data():
     
     return all_data
 
+# Exportar o DataFrame consolidado para ser usado no frontend
 if __name__ == "__main__":
     all_data = load_data()
-    print("Dados carregados e tratados com sucesso.")
-
-# Função principal para carregar dados e fornecer análises básicas
-def main():
-    all_data = load_data()
-    
-    # Estatísticas básicas
-    print("Estatísticas descritivas das variáveis numéricas:")
-    print(all_data.describe())
-    
-    # Gráficos básicos usando Plotly (para análise interna)
-    # Distribuição de acidentes por ano
-    if 'ano' in all_data.columns:
-        acidentes_por_ano = all_data['ano'].value_counts().sort_index().reset_index()
-        acidentes_por_ano.columns = ['Ano', 'Número de Acidentes']
-        fig = px.bar(acidentes_por_ano, x='Ano', y='Número de Acidentes',
-                     title="Distribuição de Acidentes por Ano",
-                     labels={'Ano': 'Ano', 'Número de Acidentes': 'Número de Acidentes'})
-        fig.show()
-    else:
-        print("Os dados de ano não estão disponíveis para criar o gráfico de distribuição por ano.")
-
-if __name__ == "__main__":
-    main()
+    all_data.to_csv("accidents_cleaned.csv", index=False)
